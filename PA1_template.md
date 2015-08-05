@@ -34,7 +34,8 @@ The **tbl_df** function of the **dplyr** package is used as the first step to fa
 manipulation of the data throughout the analysis. Other packages used later on in the script are 
 **ggplot2**, **lattice** and **lubridate**, all of which are set as required packages.
 
-```{r, message=FALSE}
+
+```r
 require(dplyr)
 require(ggplot2)
 require(lattice)
@@ -42,14 +43,22 @@ require(lubridate)
 
 rawData <- tbl_df(read.csv('activity.csv'))
 glimpse(rawData)
+```
 
+```
+## Observations: 17568
+## Variables:
+## $ steps    (int) NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N...
+## $ date     (fctr) 2012-10-01, 2012-10-01, 2012-10-01, 2012-10-01, 2012...
+## $ interval (int) 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100, 10...
 ```
 
 ## What is the mean total number of steps taken per day?
 First, it will be necessary to find the total number of steps that were recorded on each day. Rows 
 with missing step values are ignored for now.  
 
-```{r, echo=TRUE}
+
+```r
 totalStepsPerDay <-
     rawData %>%
     group_by(date) %>%
@@ -59,16 +68,31 @@ totalStepsPerDay <-
 
 A histogram provides a visual representation of the frequencies for all of the daily step totals:
 
-```{r hist-1, echo=TRUE, message=FALSE}
+
+```r
 qplot(total, data = totalStepsPerDay, geom = "histogram",
       xlab = "Total Steps in a Day", ylab = "Frequency of Days")
 ```
 
+![plot of chunk hist-1](figure/hist-1-1.png) 
+
 The mean and median number of steps per day are calculated as follows:  
 
-```{r, echo=TRUE}
+
+```r
 mean(totalStepsPerDay$total)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(totalStepsPerDay$total)
+```
+
+```
+## [1] 10765
 ```
 
 
@@ -76,7 +100,8 @@ median(totalStepsPerDay$total)
 A time series plot of the mean number of steps for each 5-minute interval over all the days is 
 helpful in providing a visual response to this question:
 
-```{r time-series-1, echo=TRUE}
+
+```r
 intervalMeans <-
     rawData %>%
     group_by(interval) %>%
@@ -89,12 +114,22 @@ plot(
     type="l", xlab="Interval IDs", ylab = "Mean Steps Over All Days"
 )
 ```
+
+![plot of chunk time-series-1](figure/time-series-1-1.png) 
   
 Which 5-minute interval, on average across all days in the dataset, contains the maximum number of steps?  
 
-```{r, echo=TRUE}
+
+```r
 maxMean <- as.numeric(summarize(intervalMeans, max(meanSteps)))
 intervalMeans[intervalMeans$meanSteps==maxMean,]
+```
+
+```
+## Source: local data frame [1 x 2]
+## 
+##   interval meanSteps
+## 1      835  206.1698
 ```
 
 
@@ -105,15 +140,21 @@ replace each missing value with the mean number of steps for that corresponding 
 
 How many missing values are there?
 
-```{r, echo=TRUE}
+
+```r
 sum(is.na(rawData$steps))
+```
+
+```
+## [1] 2304
 ```
 
 Since the mean number of steps for each interval has already been stored in the **intervalMeans** 
 data frame, a new dataset can be created by replacing each missing step value with a calculated 
 mean (rounded to the nearest integer) for that interval.
 
-```{r, echo=TRUE}
+
+```r
 imputedData <- rawData
 
 for(i in 1:nrow(imputedData))
@@ -125,28 +166,43 @@ for(i in 1:nrow(imputedData))
         imputedData[i,1] <- round(intMean,0)
     }
 }
-
 ```
 
 Here is the same type of summary information as was produced in the first part of this report, this
 time using the imputed values:
 
-```{r, echo=TRUE}
+
+```r
 totalStepsPerDay <- imputedData %>%
     group_by(date) %>%
     summarize(total = sum(steps, na.rm=TRUE))
 ```
 
-```{r hist-2, echo=TRUE, message=FALSE}
+
+```r
 qplot(total, data = totalStepsPerDay, geom = "histogram",
       xlab = "Total Steps in a Day", ylab = "Frequency of Days")
 ```
 
+![plot of chunk hist-2](figure/hist-2-1.png) 
+
 The mean and median after imputing missing values:
 
-```{r, echo=TRUE}
+
+```r
 mean(totalStepsPerDay$total)
+```
+
+```
+## [1] 10765.64
+```
+
+```r
 median(totalStepsPerDay$total)
+```
+
+```
+## [1] 10762
 ```
 
 Observe that the histogram, mean and median for the dataset with imputed values are each still 
@@ -160,7 +216,8 @@ or a weekend day. This is where the **lubridate** function, **wday**, and
 this plot since I kept getting an error when trying to use **ggplot** ... all insights on this that 
 you'd like to provide by way of comments are greatly appreciated!*
 
-```{r time-series-2, echo=TRUE}
+
+```r
 dayTypeList = c('weekend','weekday','weekday','weekday','weekday','weekday','weekend')
 imputedData <- mutate(imputedData, dayType = as.factor(dayTypeList[wday(date)]))
 
@@ -175,8 +232,9 @@ xyplot(
     layout=c(1,2), type="l",
     xlab="Interval IDs", ylab="Mean Steps in an Interval"
 )
-
 ```
+
+![plot of chunk time-series-2](figure/time-series-2-1.png) 
 
 Based on this last plot, there appears to be some evidence of more activity in the midday 5-mintute 
 intervals for the weekend days as compared to the same intervals for the weekdays. Since there are 
